@@ -5,8 +5,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ```bash
-# Full pipeline: fetch → dedup → DeepSeek summary → render HTML
+# Full pipeline (new articles only): fetch → dedup → DeepSeek summary → render HTML
 python3 run.py
+
+# Process ALL articles, skip cache dedup
+python3 run.py --date 2026-06-15 --all
 
 # Fetch only: fetch and cache articles, skip LLM processing
 python3 run.py --fetch-only
@@ -18,7 +21,7 @@ python3 run.py --date 2026-06-15        # Generate report for a specific date
 python3 run.py --config custom.yaml     # Use a different config file
 ```
 
-Requires `DEEPSEEK_API_KEY` env var, either via `.env` file or shell export. No tests or linting configured.
+API key via `.env` file (`DEEPSEEK_API_KEY=xxx`) loaded by `python-dotenv`. No tests or linting configured.
 
 ## Architecture
 

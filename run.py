@@ -8,8 +8,12 @@ import sys
 from datetime import date, datetime
 from pathlib import Path
 
+from dotenv import load_dotenv
+
 # Ensure project root is on path
 sys.path.insert(0, str(Path(__file__).parent))
+
+load_dotenv()
 
 from src.config import Config
 from src.cache import CacheManager
@@ -32,7 +36,7 @@ def setup_logging(config: Config):
     )
 
 
-async def run_full(config: Config, report_date: date):
+async def run_full(config: Config, report_date: date, include_all: bool = False):
     logger = logging.getLogger("daily-report")
 
     logger.info(f"=== Daily Report: {report_date.isoformat()} ===")
@@ -52,16 +56,21 @@ async def run_full(config: Config, report_date: date):
     all_articles = await fetcher.fetch_all()
     logger.info(f"Fetched {len(all_articles)} articles total")
 
-    new_articles, deduped_count = await fetcher.deduplicate(all_articles)
-    logger.info(f"After dedup: {len(new_articles)} new (deduped {deduped_count})")
+    if include_all:
+        articles_for_processing = all_articles
+        deduped_count = 0
+        logger.info("--all: processing all fetched articles (skipping dedup)")
+    else:
+        articles_for_processing, deduped_count = await fetcher.deduplicate(all_articles)
+        logger.info(f"After dedup: {len(articles_for_processing)} new (deduped {deduped_count})")
 
-    if not new_articles:
-        logger.warning("No new articles to process")
+    if not articles_for_processing:
+        logger.warning("No articles to process")
         return None
 
     # 3. Process with LLM
     processor = NewsProcessor(config)
-    processed = await processor.process(new_articles)
+    processed = await processor.process(articles_for_processing)
     logger.info(f"Processed {len(processed)} articles")
 
     # 4. Build report
@@ -117,6 +126,7 @@ def main():
     parser = argparse.ArgumentParser(description="AI 科技日报生成器")
     parser.add_argument("--config", default="config.yaml", help="Config file path")
     parser.add_argument("--date", help="Report date (YYYY-MM-DD, default today)")
+    parser.add_argument("--all", action="store_true", dest="include_all", help="Process all fetched articles, skip dedup")
     parser.add_argument("--fetch-only", action="store_true", help="Only fetch and cache, skip processing")
     parser.add_argument("--dry-run", action="store_true", help="Fetch but skip LLM and output")
     args = parser.parse_args()
@@ -131,7 +141,7 @@ def main():
     elif args.fetch_only:
         asyncio.run(run_fetch_only(config))
     else:
-        result = asyncio.run(run_full(config, report_date))
+        result = asyncio.run(run_full(config, report_date, include_all=args.include_all))
         if result:
             print(f"\n✅ Report: {result}")
             print(f"   Open: open {result}")
