@@ -1,0 +1,17 @@
+# secrets
+.env
+
+# macOS
+.DS_Store
+
+# generated
+output/
+cache/
+logs/
+
+# Python
+__pycache__/
+
+# LLM agents
+.claude/
+.agents/

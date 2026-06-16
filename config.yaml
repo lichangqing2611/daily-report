@@ -1,0 +1,43 @@
+# ── LLM ─────────────────────────────────────────────────~~~~─
+llm:
+  provider: "deepseek"       # deepseek | openai | anthropic
+  api_key: "${DEEPSEEK_API_KEY}"
+  api_base: "https://api.deepseek.com/v1"
+  model: "deepseek-v4-pro"
+  max_tokens: 163840
+  temperature: 0.3
+
+# ── Sources ───────────────────────────────────────────────────
+sources:
+  GitHubTrending:
+    enabled: true
+    since: "daily"           # daily | weekly | monthly
+    language: ""             # empty = all, e.g. "python", "javascript"
+    max_repos: 15
+
+  RSSFeed:
+    enabled: true
+    feeds:
+      - name: "自建RSS聚合"
+        url: "http://rss.charleslee.cn/feeds/all.atom"
+        max_articles: 30
+
+# ── Processing ────────────────────────────────────────────────
+processing:
+  batch_size: 10
+  max_total_articles: 80
+
+# ── Output ────────────────────────────────────────────────────
+output:
+  dir: "./output"
+  keep_days: 30
+
+# ── Cache ─────────────────────────────────────────────────────
+cache:
+  db_path: "./cache/articles.db"
+  ttl_hours: 72
+
+# ── Logging ───────────────────────────────────────────────────
+logging:
+  level: "INFO"
+  file: "./logs/daily-report.log"

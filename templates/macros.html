@@ -1,0 +1,68 @@
+{% macro importance_bar(score) %}
+<div class="score-bar">
+  <div class="score-fill" style="width: {{ (score * 10)|int }}%"></div>
+</div>
+<span class="score-label">{{ "%.1f"|format(score) }}</span>
+{% endmacro %}
+
+{% macro source_badge(source_name) %}
+<span class="badge source-badge">{{ source_name }}</span>
+{% endmacro %}
+
+{% macro category_badge(category, color) %}
+<span class="badge category-badge" style="background: {{ color }}20; color: {{ color }}; border: 1px solid {{ color }}40">{{ category }}</span>
+{% endmacro %}
+
+{% macro stat_card(label, value, icon) %}
+<div class="stat-card">
+  <div class="stat-value">{{ value }}</div>
+  <div class="stat-label">{{ label }}</div>
+</div>
+{% endmacro %}
+
+{% macro article_card(article, show_score=True) %}
+<article class="article-card">
+  <div class="article-header">
+    <h3 class="article-title">
+      <a href="{{ article.url }}" target="_blank" rel="noopener">{{ article.title }}</a>
+    </h3>
+    <div class="article-meta">
+      {{ source_badge(article.source_name) }}
+      {% if article.published_at %}
+      <span class="article-date">{{ article.published_at.strftime('%Y-%m-%d') }}</span>
+      {% endif %}
+      {% if show_score %}
+      {{ importance_bar(article.importance_score) }}
+      {% endif %}
+    </div>
+  </div>
+  {% if article.chinese_summary %}
+  <p class="article-summary">{{ article.chinese_summary }}</p>
+  {% elif article.description %}
+  <p class="article-summary">{{ article.description[:200] }}</p>
+  {% endif %}
+  {% if article.key_points %}
+  <ul class="key-points">
+    {% for point in article.key_points %}
+    <li>{{ point }}</li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+</article>
+{% endmacro %}
+
+{% macro category_section(category, articles, color_index) %}
+{% set colors = ['#7c3aed', '#059669', '#2563eb', '#ea580c', '#dc2626', '#0891b2', '#d97706', '#6b7280'] %}
+{% set color = colors[color_index % colors|length] %}
+<section class="category-section">
+  <h2 class="category-title" style="border-left-color: {{ color }}">
+    {{ category }}
+    <span class="category-count">{{ articles|length }} 篇</span>
+  </h2>
+  <div class="articles-grid">
+    {% for article in articles %}
+    {{ article_card(article, show_score=True) }}
+    {% endfor %}
+  </div>
+</section>
+{% endmacro %}
