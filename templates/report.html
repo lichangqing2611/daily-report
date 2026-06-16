@@ -41,50 +41,60 @@
 
     /* ── Header ───────────────────── */
     header {
-      text-align: center;
-      padding: 48px 0 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 32px 0;
       border-bottom: 1px solid var(--color-border);
       margin-bottom: 32px;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .header-brand {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
     }
 
     header h1 {
-      font-size: 32px;
+      font-size: 28px;
       font-weight: 700;
       letter-spacing: -0.5px;
-      margin-bottom: 8px;
+      margin: 0;
+      white-space: nowrap;
     }
 
     header .date {
-      font-size: 16px;
+      font-size: 14px;
       color: var(--color-text-secondary);
-      margin-bottom: 24px;
+      white-space: nowrap;
     }
 
     .stats-row {
       display: flex;
-      justify-content: center;
-      gap: 16px;
+      gap: 12px;
       flex-wrap: wrap;
     }
 
     .stat-card {
+      display: flex;
+      align-items: baseline;
+      gap: 4px;
+      padding: 4px 10px;
+      border-radius: 6px;
       background: var(--color-card-bg);
-      border-radius: var(--radius);
-      padding: 16px 24px;
-      text-align: center;
-      min-width: 100px;
     }
 
     .stat-value {
-      font-size: 28px;
+      font-size: 15px;
       font-weight: 700;
       color: var(--color-accent);
     }
 
     .stat-label {
-      font-size: 13px;
+      font-size: 12px;
       color: var(--color-text-secondary);
-      margin-top: 4px;
     }
 
     /* ── Top Stories ───────────────── */
@@ -217,23 +227,12 @@
     }
 
     .article-summary {
-      font-size: 13px;
-      color: var(--color-text-secondary);
-      line-height: 1.6;
-      margin-bottom: 8px;
-    }
-
-    .key-points {
-      margin: 8px 0 0 16px;
-      padding: 0;
-      list-style: disc;
-    }
-
-    .key-points li {
-      font-size: 12px;
-      color: var(--color-text-secondary);
-      margin-bottom: 4px;
-      line-height: 1.5;
+      font-size: 14px;
+      color: #4b5563;
+      line-height: 1.8;
+      padding-left: 12px;
+      border-left: 3px solid var(--color-border);
+      margin-bottom: 0;
     }
 
     /* ── Footer ───────────────────── */
@@ -262,7 +261,8 @@
     /* ── Responsive ────────────────── */
     @media (max-width: 768px) {
       .container { padding: 12px 16px; }
-      header { padding: 32px 0 24px; }
+      header { padding: 24px 0; flex-direction: column; text-align: center; }
+      .header-brand { flex-direction: column; align-items: center; gap: 4px; }
       header h1 { font-size: 24px; }
 
     }
@@ -278,8 +278,10 @@
   <div class="container">
     <!-- Header -->
     <header>
-      <h1>🤖 AI 科技日报</h1>
-      <p class="date">{{ report.report_date.strftime('%Y年%m月%d日') }} · {{ report.report_date.strftime('%A') }}</p>
+      <div class="header-brand">
+        <h1>🤖 AI 科技日报</h1>
+        <span class="date">{{ report.report_date.strftime('%Y年%m月%d日') }} · {{ report.report_date.strftime('%A') }}</span>
+      </div>
       <div class="stats-row">
         {{ stat_card("新闻总数", report.total_published) }}
         {{ stat_card("信息源", report.source_stats|length) }}

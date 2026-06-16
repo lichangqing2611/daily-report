@@ -77,7 +77,7 @@ class RSSFeed(SourcePlugin):
                     all_articles.append(Article(
                         title=title,
                         url=link,
-                        source_name=f"{self.name} - {feed_name}",
+                        source_name=author if author else feed_name,
                         source_type="rss",
                         description=description[:500],
                         author=author or None,

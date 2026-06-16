@@ -24,8 +24,7 @@ CATEGORIES = [
 
 SYSTEM_PROMPT = """你是一个中文AI科技新闻编辑。给定一批文章，对每篇文章返回一个JSON对象，包含以下字段：
 - category: 分类，必须是以下之一：{categories}
-- chinese_summary: 2-4句中文摘要。如果原文是英文，请翻译关键信息。
-- key_points: 3-5个中文要点，每点不超过30字
+- chinese_summary: 3-5句中文摘要，简洁精炼、信息密度高。如果原文是英文，请翻译关键信息。
 - importance_score: 重要性评分 1.0-10.0（浮点数），评分标准：
   * 9-10: 重大突破、行业里程碑事件
   * 7-8: 重要产品发布、关键技术进展
@@ -138,7 +137,6 @@ class NewsProcessor:
                 category=data.get("category", "其他"),
                 chinese_summary=data.get("chinese_summary", a.description[:200]),
                 importance_score=float(data.get("importance_score", 5.0)),
-                key_points=data.get("key_points", []),
                 processing_timestamp=datetime.now(),
             ))
         return results

@@ -32,7 +32,6 @@ class ProcessedArticle:
     category: str = "其他"
     chinese_summary: str = ""
     importance_score: float = 5.0
-    key_points: list[str] = field(default_factory=list)
     processing_timestamp: Optional[datetime] = None
 
 

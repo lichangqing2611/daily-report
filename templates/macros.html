@@ -15,8 +15,8 @@
 
 {% macro stat_card(label, value, icon) %}
 <div class="stat-card">
-  <div class="stat-value">{{ value }}</div>
-  <div class="stat-label">{{ label }}</div>
+  <span class="stat-label">{{ label }}</span>
+  <span class="stat-value">{{ value }}</span>
 </div>
 {% endmacro %}
 
@@ -40,13 +40,6 @@
   <p class="article-summary">{{ article.chinese_summary }}</p>
   {% elif article.description %}
   <p class="article-summary">{{ article.description[:200] }}</p>
-  {% endif %}
-  {% if article.key_points %}
-  <ul class="key-points">
-    {% for point in article.key_points %}
-    <li>{{ point }}</li>
-    {% endfor %}
-  </ul>
   {% endif %}
 </article>
 {% endmacro %}
