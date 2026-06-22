@@ -41,6 +41,26 @@ python3 run.py --dry-run
 
 编辑 `config.yaml` 可调整 RSS 源、LLM 参数、输出目录等。配置文件支持 `${ENV_VAR}` 环境变量插值。API Key 通过 `.env` 文件或环境变量设置。
 
+### `source_urls` 配置
+
+在 `config.yaml` 的 `source_urls` 段可配置信息源名称到官网 URL 的映射，用于报告底部信息源超链接：
+
+```yaml
+source_urls:
+  GitHub Trending: "https://github.com/trending"
+  雷峰网: "https://www.leiphone.com/"
+  量子位: "https://www.qbitai.com/"
+```
+
+未配置 URL 的信息源将以纯文本显示。
+
+## 报告页面
+
+生成的 HTML 报告包含两个标签页：
+
+- **科技新闻**：LLM 分类整理的新闻文章，包含今日头条和按类别分组展示
+- **GitHub Trending**：独立展示 GitHub 当日热门项目，按当日新增 Star 数降序排列。每项显示项目名（链接至 GitHub）、编程语言、总 Star 数、每日新增 Star 数、Fork 数（同行展示），下方为 LLM 生成的中文介绍
+
 ## 项目结构
 
 ```

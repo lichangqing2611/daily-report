@@ -171,6 +171,16 @@ class NewsProcessor:
         logger.warning(f"Failed to parse LLM response as JSON: {text[:200]}...")
         return []
 
+    @staticmethod
+    def _extract_stars_today(article: ProcessedArticle) -> int:
+        for tag in article.tags:
+            if tag.startswith("stars_today_raw:"):
+                try:
+                    return int(tag.split(":", 1)[1])
+                except (ValueError, IndexError):
+                    pass
+        return 0
+
     def _drop_duplicates(self, articles: list[ProcessedArticle]) -> list[ProcessedArticle]:
         """Drop articles with lower importance that are near-duplicates."""
         seen_urls = set()
@@ -194,12 +204,17 @@ class NewsProcessor:
         # Sort by importance desc
         sorted_articles = sorted(articles, key=lambda a: a.importance_score, reverse=True)
 
-        # Top stories
-        top_stories = sorted_articles[:5]
+        # Separate GitHub Trending repos (re-sort by stars_today_raw desc)
+        github_repos = [a for a in sorted_articles if a.source_type == "github_trending"]
+        github_repos.sort(key=lambda a: self._extract_stars_today(a), reverse=True)
+        non_github = [a for a in sorted_articles if a.source_type != "github_trending"]
 
-        # Group by category
+        # Top stories (from non-GitHub articles only)
+        top_stories = non_github[:5]
+
+        # Group by category (non-GitHub only)
         categories: dict[str, list[ProcessedArticle]] = {}
-        for a in sorted_articles:
+        for a in non_github:
             categories.setdefault(a.category, []).append(a)
 
         # Stats
@@ -217,6 +232,7 @@ class NewsProcessor:
             articles=sorted_articles,
             categories=categories,
             top_stories=top_stories,
+            github_repos=github_repos,
             source_stats=source_stats,
             category_stats=category_stats,
             total_fetched=total_fetched,

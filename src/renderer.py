@@ -16,10 +16,11 @@ class Renderer:
             trim_blocks=True,
             lstrip_blocks=True,
         )
+        self.env.tests["contains"] = lambda value, substr: substr in value
 
-    def render(self, report: Report) -> Path:
+    def render(self, report: Report, source_urls: dict[str, str] | None = None) -> Path:
         template = self.env.get_template("report.html")
-        html = template.render(report=report)
+        html = template.render(report=report, source_urls=source_urls or {})
 
         filename = f"report-{report.report_date.isoformat()}.html"
         output_path = self.output_dir / filename

@@ -27,6 +27,15 @@ processing:
   batch_size: 10
   max_total_articles: 80
 
+# ── Source URLs ────────────────────────────────────────────────
+# Maps source display names to their website URLs for footer links.
+source_urls:
+  GitHub Trending: "https://github.com/trending"
+  雷峰网: "https://www.leiphone.com/"
+  半导体行业观察: "http://www.semi-insights.com/"
+  量子位: "https://www.qbitai.com/"
+  火山引擎: "https://developer.volcengine.com/articles/"
+
 # ── Output ────────────────────────────────────────────────────
 output:
   dir: "./output"

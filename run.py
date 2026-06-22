@@ -84,7 +84,7 @@ async def run_full(config: Config, report_date: date, include_all: bool = False)
 
     # 5. Render
     renderer = Renderer(template_dir="./templates", output_dir=config.output_dir)
-    output_path = renderer.render(report)
+    output_path = renderer.render(report, source_urls=config.source_urls)
 
     # 6. Record
     cache.record_report(report_date, str(output_path), report.total_published)

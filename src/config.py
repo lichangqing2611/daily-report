@@ -70,6 +70,10 @@ class Config:
         return self.data.get("llm", {}).get("temperature", 0.3)
 
     @property
+    def source_urls(self) -> dict[str, str]:
+        return self.data.get("source_urls", {})
+
+    @property
     def output_dir(self) -> str:
         return self.data.get("output", {}).get("dir", "./output")
 
