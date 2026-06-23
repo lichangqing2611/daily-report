@@ -20,11 +20,27 @@ sources:
     max_papers: 30
 
   RSSFeed:
-    enabled: true
+    enabled: false
     feeds:
       - name: "自建RSS聚合"
         url: "http://rss.charleslee.cn/feeds/all.atom"
         max_articles: 30
+
+  LeiphoneSource:
+    enabled: true
+    max_articles: 15
+
+  SemiInsightsSource:
+    enabled: true
+    max_articles: 15
+
+  QbitaiSource:
+    enabled: true
+    max_articles: 15
+
+  VolcengineSource:
+    enabled: true
+    max_articles: 10
 
 # ── Processing ────────────────────────────────────────────────
 processing:

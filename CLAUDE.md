@@ -34,7 +34,16 @@ API key via `.env` file (`DEEPSEEK_API_KEY=xxx`) loaded by `python-dotenv`. No t
 
 Plugins receive their config section from `config.yaml` via `configure(dict)`. `Fetcher` runs all enabled plugins concurrently with `asyncio.gather`, isolating failures per plugin.
 
-**RSS source** (`src/sources/rss_feed.py`): Uses wewe-rss self-built aggregation service. Each entry's `<author><name>` (微信公众号名称) becomes the `source_name`, so per-article sources show the actual account name (e.g., 36氪, 雷峰网) rather than a generic feed label.
+**Web scraping sources** — four individual website scrapers replace the unstable RSSFeed:
+
+- `LeiphoneSource` (`src/sources/leiphone.py`): Scrapes leiphone.com (雷峰网) — SSR HTML with `.article-list .item` containers. Parses Chinese relative dates (昨天 HH:MM, X小时前, MM月DD日).
+- `SemiInsightsSource` (`src/sources/semi_insights.py`): Scrapes semi-insights.com (半导体行业观察) — PHPCMS SSR, `ul.info-news-c > li` containers. Disables SSL verification (self-signed cert). Date format: YYYY.MM.DD.
+- `QbitaiSource` (`src/sources/qbitai.py`): Scrapes qbitai.com (量子位) — WordPress SSR, `.article_list .picture_text` containers. Needs real User-Agent header to avoid Cloudflare 403. Parses relative dates (X分钟前, X小时前).
+- `VolcengineSource` (`src/sources/volcengine.py`): Uses `/api/fe/v1/articles` JSON API directly (Modern.js SPA — SSR HTML lacks article URLs). Returns structured data with author names, categories, tags, and Unix timestamps.
+
+**RSS source** (`src/sources/rss_feed.py`): Disabled by default. Uses wewe-rss self-built aggregation service. Kept as a fallback option.
+
+**BAAI Hub** (`src/sources/baai_hub.py`): Uses Playwright headless Chromium to scroll-load up to 30 papers from BAAI Hub hotness ranking. Falls back to static HTTP scrape (10 papers) if Playwright unavailable. Paper titles are batch-translated to Chinese via DeepSeek in `run.py:_translate_paper_titles()`.
 
 **Deduplication**: Two-stage — exact URL match in SQLite (`fetch_history` table, TTL 72h), then LLM-based semantic dedup during processing.
 
@@ -42,9 +51,10 @@ Plugins receive their config section from `config.yaml` via `configure(dict)`. `
 
 **Output**: Self-contained HTML via Jinja2 (`templates/report.html` + `templates/macros.html`). Reports named `report-YYYY-MM-DD.html` — same-date runs overwrite.
 
-**Layout**: Two-tab UI under the header:
+**Layout**: Three-tab UI under the header:
 - **科技新闻** tab — Top Stories + category-grouped articles. Summaries rendered with left border accent.
-- **GitHub Trending** tab — Dedicated section for GitHub repos, sorted by daily new stars descending. Each card shows repo name (linked to GitHub) + inline stats (language, ⭐ total stars, 📈 daily stars, 🍴 forks) in one row, with LLM-generated Chinese introduction below. GitHub Trending articles are separated in `build_report()` into `Report.github_repos` and excluded from the news categories/top-stories.
+- **GitHub Trending** tab — Dedicated section for GitHub repos, sorted by daily new stars descending. Each card shows repo name (linked to GitHub) + inline stats (language, total stars, daily stars, forks) in one row, with LLM-generated Chinese introduction below. GitHub Trending articles are separated in `build_report()` into `Report.github_repos` and excluded from the news categories/top-stories.
+- **热门论文** tab — BAAI Hub paper rankings (top 30). Each paper card shows rank badge (top 3 gold), English title (linked), Chinese translation subtitle, and full Chinese summary.
 
 **GitHub Trending data flow**:
 1. `github_trending.py` scrapes the trending page — parses repo name, description, language, total stars, daily stars ("stars today"), forks. Daily stars parsed via `repo.find(string=re.compile(r"stars?\s+today"))` (BeautifulSoup text-node search).
@@ -59,9 +69,15 @@ Plugins receive their config section from `config.yaml` via `configure(dict)`. `
 
 ## Config
 
-`sources` maps directly to plugin class names. Currently two sources enabled:
-- `GitHubTrending` — GitHub trending repos (fetches repo name, description, language, total stars, daily stars "stars today", forks; stores in `tags` as structured key:value strings)
-- `RSSFeed` — single feed from `http://rss.charleslee.cn/feeds/all.atom` (wewe-rss)
+`sources` maps directly to plugin class names. Currently enabled sources:
+- `GitHubTrending` — GitHub trending repos
+- `BAAIHub` — BAAI Hub paper rankings (hotness, weekly)
+- `LeiphoneSource` — 雷峰网 tech news (scraped)
+- `SemiInsightsSource` — 半导体行业观察 (scraped)
+- `QbitaiSource` — 量子位 AI news (scraped)
+- `VolcengineSource` — 火山引擎 developer articles (API)
+
+`RSSFeed` is kept but disabled (`enabled: false`).
 
 `source_urls` maps display names to website URLs for footer hyperlinks. `${ENV_VAR}` interpolation supported. See `src/config.py` for all properties.
 
@@ -70,8 +86,9 @@ Plugins receive their config section from `config.yaml` via `configure(dict)`. `
 - Add a news source → create a file in `src/sources/` with a `SourcePlugin` subclass, then add its config in `config.yaml`
 - Modify LLM prompt or categories → `src/processor.py` (`CATEGORIES`, `SYSTEM_PROMPT`)
 - Change HTML layout/styling → `templates/report.html`
-- Change article card structure → `templates/macros.html`
-- Change GitHub repo card → `templates/macros.html` (`github_repo_card` macro, driven by `tags` list)
+- Change article card structure → `templates/macros.html` (`article_card`, `github_repo_card`, `paper_card` macros)
 - Change GitHub trending sort order → `src/sources/github_trending.py` (`fetch()` sort) and `src/processor.py` (`_extract_stars_today()` + `build_report()` sort)
+- Change paper title translation → `run.py` (`_translate_paper_titles()`)
+- Change BAAI Hub scroll/load behavior → `src/sources/baai_hub.py` (`fetch()` scroll loop)
 - Add source homepage link → `config.yaml` (`source_urls` section)
 - Register Jinja2 custom test/filter → `src/renderer.py`
