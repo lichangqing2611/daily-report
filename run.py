@@ -36,6 +36,43 @@ def setup_logging(config: Config):
     )
 
 
+async def _translate_paper_titles(papers: list, config: Config, logger) -> None:
+    """Batch-translate paper titles to Chinese and store in tags as title_cn."""
+    from openai import AsyncOpenAI
+
+    client = AsyncOpenAI(api_key=config.llm_api_key, base_url=config.llm_api_base)
+    titles = [p.title for p in papers]
+
+    resp = await client.chat.completions.create(
+        model=config.llm_model,
+        temperature=0.3,
+        max_tokens=4096,
+        messages=[{
+            "role": "system",
+            "content": "你是一个学术论文标题翻译助手。将以下英文论文标题翻译为简洁准确的中文。保留专有名词（模型名、方法名等）的英文原文。严格返回JSON数组，每个元素是一个字符串，对应每篇论文的中文译名。不要有任何其他文字。",
+        }, {
+            "role": "user",
+            "content": f"翻译以下{len(titles)}篇论文标题为中文，返回JSON字符串数组：\n" +
+                       "\n".join(f"{i+1}. {t}" for i, t in enumerate(titles)),
+        }],
+    )
+
+    text = resp.choices[0].message.content or ""
+    # Parse JSON array from response
+    import json, re
+    try:
+        cn_titles = json.loads(text)
+    except json.JSONDecodeError:
+        m = re.search(r"\[.*\]", text, re.DOTALL)
+        cn_titles = json.loads(m.group()) if m else []
+
+    for i, paper in enumerate(papers):
+        if i < len(cn_titles) and cn_titles[i]:
+            paper.tags.append(f"title_cn:{cn_titles[i]}")
+
+    logger.info(f"Translated {min(len(cn_titles), len(papers))} paper titles")
+
+
 async def run_full(config: Config, report_date: date, include_all: bool = False):
     logger = logging.getLogger("daily-report")
 
@@ -64,22 +101,51 @@ async def run_full(config: Config, report_date: date, include_all: bool = False)
         articles_for_processing, deduped_count = await fetcher.deduplicate(all_articles)
         logger.info(f"After dedup: {len(articles_for_processing)} new (deduped {deduped_count})")
 
+    # Separate paper rankings (no LLM needed, already have Chinese abstracts)
+    paper_articles = [a for a in articles_for_processing if a.source_type == "paper_ranking"]
+    news_articles = [a for a in articles_for_processing if a.source_type != "paper_ranking"]
+
     if not articles_for_processing:
         logger.warning("No articles to process")
         return None
 
-    # 3. Process with LLM
+    # 3. Process news with LLM
     processor = NewsProcessor(config)
-    processed = await processor.process(articles_for_processing)
-    logger.info(f"Processed {len(processed)} articles")
+    processed_news = await processor.process(news_articles) if news_articles else []
+    logger.info(f"Processed {len(processed_news)} news articles")
+
+    # Convert paper articles to ProcessedArticle (skip LLM)
+    paper_processed = []
+    for a in paper_articles:
+        from src.models import ProcessedArticle
+        paper_processed.append(ProcessedArticle(
+            title=a.title,
+            url=a.url,
+            source_name=a.source_name,
+            source_type=a.source_type,
+            description=a.description,
+            author=a.author,
+            published_at=a.published_at,
+            tags=list(a.tags),
+            content_hash=a.content_hash,
+            fetch_timestamp=a.fetch_timestamp,
+            category="热门论文",
+            chinese_summary=a.description,  # BAAI abstracts are already in Chinese
+            importance_score=5.0,
+        ))
+
+    # Batch-translate paper titles to Chinese via LLM
+    if paper_processed:
+        await _translate_paper_titles(paper_processed, config, logger)
 
     # 4. Build report
     report = await processor.build_report(
-        articles=processed,
+        articles=processed_news + paper_processed,
         report_date=report_date,
         total_fetched=len(all_articles),
         total_deduped=deduped_count,
         failed_sources=fetcher.failed_plugins,
+        paper_rankings=paper_processed,
     )
 
     # 5. Render

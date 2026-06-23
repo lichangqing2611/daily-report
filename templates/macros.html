@@ -31,6 +31,24 @@
 <span class="score-label">{{ "%.1f"|format(score) }}</span>
 {% endmacro %}
 
+{% macro paper_card(paper, rank) %}
+{% set title_cn = paper.tags|select('contains', 'title_cn:')|first|default('') %}
+<article class="paper-card">
+  <span class="paper-rank">{{ rank }}</span>
+  <div class="paper-body">
+    <h3 class="paper-title">
+      <a href="{{ paper.url }}" target="_blank" rel="noopener">{{ paper.title }}</a>
+    </h3>
+    {% if title_cn %}
+    <h4 class="paper-title-cn">{{ title_cn|replace('title_cn:', '') }}</h4>
+    {% endif %}
+    {% if paper.chinese_summary %}
+    <p class="paper-summary">{{ paper.chinese_summary }}</p>
+    {% endif %}
+  </div>
+</article>
+{% endmacro %}
+
 {% macro source_badge(source_name) %}
 <span class="badge source-badge">{{ source_name }}</span>
 {% endmacro %}

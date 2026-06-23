@@ -1,4 +1,4 @@
-{% from "macros.html" import article_card, category_section, stat_card, source_badge, github_repo_card with context %}
+{% from "macros.html" import article_card, category_section, stat_card, source_badge, github_repo_card, paper_card with context %}
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -376,6 +376,87 @@
       margin-bottom: 0;
     }
 
+    /* ── Paper Ranking Cards ──────── */
+    .paper-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+
+    .paper-card {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      background: var(--color-card-bg);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      transition: box-shadow 0.2s, background 0.2s;
+    }
+
+    .paper-card:hover {
+      background: var(--color-card-hover);
+      box-shadow: var(--shadow-hover);
+    }
+
+    .paper-rank {
+      flex-shrink: 0;
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--color-text-secondary);
+      background: var(--color-border);
+      border-radius: 6px;
+      margin-top: 2px;
+    }
+
+    .paper-card:nth-child(-n+3) .paper-rank {
+      background: linear-gradient(135deg, #f59e0b, #ea580c);
+      color: #fff;
+    }
+
+    .paper-body {
+      min-width: 0;
+    }
+
+    .paper-title {
+      font-size: 14px;
+      font-weight: 600;
+      line-height: 1.4;
+      margin-bottom: 4px;
+    }
+
+    .paper-title {
+      margin-bottom: 2px;
+    }
+
+    .paper-title a {
+      color: var(--color-text);
+      text-decoration: none;
+    }
+
+    .paper-title a:hover {
+      color: var(--color-accent);
+    }
+
+    .paper-title-cn {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--color-text-secondary);
+      line-height: 1.4;
+      margin-bottom: 6px;
+    }
+
+    .paper-summary {
+      font-size: 13px;
+      color: #4b5563;
+      line-height: 1.7;
+    }
+
     /* ── Footer ───────────────────── */
     footer {
       border-top: 1px solid var(--color-border);
@@ -439,6 +520,9 @@
         </svg>
         GitHub Trending<span class="tab-count">{{ report.github_repos|length }} 个</span>
       </button>
+      {% if report.paper_rankings %}
+      <button class="tab-btn" data-tab="tab-papers">📄 热门论文<span class="tab-count">{{ report.paper_rankings|length }} 篇</span></button>
+      {% endif %}
     </nav>
 
     <main>
@@ -474,6 +558,17 @@
         <p style="text-align: center; color: var(--color-text-secondary); padding: 40px 0;">今日无 GitHub Trending 数据</p>
         {% endif %}
       </div>
+
+      <!-- Tab Panel: Paper Rankings -->
+      {% if report.paper_rankings %}
+      <div class="tab-panel" id="tab-papers">
+        <div class="paper-grid">
+          {% for paper in report.paper_rankings %}
+          {{ paper_card(paper, loop.index) }}
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
     </main>
 
     <!-- Footer -->

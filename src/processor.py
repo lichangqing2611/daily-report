@@ -200,6 +200,7 @@ class NewsProcessor:
         total_fetched: int = 0,
         total_deduped: int = 0,
         failed_sources: Optional[list[dict]] = None,
+        paper_rankings: Optional[list[ProcessedArticle]] = None,
     ) -> Report:
         # Sort by importance desc
         sorted_articles = sorted(articles, key=lambda a: a.importance_score, reverse=True)
@@ -209,12 +210,15 @@ class NewsProcessor:
         github_repos.sort(key=lambda a: self._extract_stars_today(a), reverse=True)
         non_github = [a for a in sorted_articles if a.source_type != "github_trending"]
 
-        # Top stories (from non-GitHub articles only)
-        top_stories = non_github[:5]
+        # Exclude paper rankings from news categories/top-stories
+        news_articles = [a for a in non_github if a.source_type != "paper_ranking"]
 
-        # Group by category (non-GitHub only)
+        # Top stories (from news articles only)
+        top_stories = news_articles[:5]
+
+        # Group by category (news only)
         categories: dict[str, list[ProcessedArticle]] = {}
-        for a in non_github:
+        for a in news_articles:
             categories.setdefault(a.category, []).append(a)
 
         # Stats
@@ -233,6 +237,7 @@ class NewsProcessor:
             categories=categories,
             top_stories=top_stories,
             github_repos=github_repos,
+            paper_rankings=paper_rankings or [],
             source_stats=source_stats,
             category_stats=category_stats,
             total_fetched=total_fetched,

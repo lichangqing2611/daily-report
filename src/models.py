@@ -43,6 +43,7 @@ class Report:
     categories: dict[str, list[ProcessedArticle]] = field(default_factory=dict)
     top_stories: list[ProcessedArticle] = field(default_factory=list)
     github_repos: list[ProcessedArticle] = field(default_factory=list)
+    paper_rankings: list[ProcessedArticle] = field(default_factory=list)
     source_stats: dict[str, int] = field(default_factory=dict)
     category_stats: dict[str, int] = field(default_factory=dict)
     total_fetched: int = 0
